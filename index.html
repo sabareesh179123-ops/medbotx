@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Med Bot X — Drug Interaction Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #04060e;--surface: #080e1c;--panel: #0c1525;
+  --border: rgba(56,189,248,0.12);--border-h: rgba(56,189,248,0.3);
+  --accent: #38bdf8;--accent2: #a78bfa;--accent3: #f472b6;
+  --danger: #f87171;--warn: #fbbf24;--safe: #34d399;
+  --text: #e2eaf5;--muted: #4a6080;--muted2: #7a92b0;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+.glitch-bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;opacity:0.4;background:radial-gradient(circle at 20% 30%,rgba(56,189,248,0.05) 0%,transparent 50%),radial-gradient(circle at 80% 70%,rgba(167,139,250,0.05) 0%,transparent 50%);}
+.nav{padding:24px 5%;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100;background:rgba(4,6,14,0.8);}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;letter-spacing:-0.5px;display:flex;align-items:center;gap:12px;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.logo i{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;-webkit-text-fill-color:white;font-style:normal;font-size:18px;}
+.main-wrapper{max-width:1100px;margin:40px auto;padding:0 24px;}
+.hero{text-align:center;margin-bottom:60px;}
+.hero h1{font-family:'Syne',sans-serif;font-size:clamp(2.5rem,8vw,4.5rem);font-weight:800;line-height:0.9;margin-bottom:24px;letter-spacing:-2px;}
+.hero h1 span{display:block;color:var(--muted);font-size:0.4em;letter-spacing:4px;text-transform:uppercase;margin-bottom:10px;font-family:'DM Mono',monospace;}
+.hero p{max-width:600px;margin:0 auto;color:var(--muted2);font-size:1.1rem;}
+
+#apiSetup{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:32px;margin-bottom:40px;position:relative;overflow:hidden;}
+.setup-title{font-family:'Syne',sans-serif;font-weight:700;font-size:18px;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.key-row{display:flex;gap:12px;margin-top:20px;}
+.key-input{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px 20px;color:white;font-family:'DM Mono',monospace;font-size:14px;outline:none;transition:0.3s;}
+.key-input:focus{border-color:var(--accent);box-shadow:0 0 20px rgba(56,189,248,0.15);}
+.key-save{background:var(--accent);color:black;border:none;padding:0 24px;border-radius:12px;font-weight:700;cursor:pointer;transition:0.3s;white-space:nowrap;}
+.key-save:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(56,189,248,0.3);}
+.key-status{font-size:12px;margin-top:12px;color:var(--muted2);height:18px;}
+
+.app-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;}
+@media(max-width:850px){.app-grid{grid-template-columns:1fr;}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:32px;height:fit-content;position:sticky;top:100px;}
+.f-group{margin-bottom:24px;}
+.f-label{display:block;font-size:12px;font-weight:600;text-transform:uppercase;color:var(--muted);margin-bottom:10px;letter-spacing:1px;font-family:'DM Mono',monospace;}
+textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:18px;color:white;font-family:inherit;font-size:15px;resize:none;outline:none;transition:0.3s;min-height:140px;}
+textarea:focus{border-color:var(--accent2);box-shadow:0 0 20px rgba(167,139,250,0.1);}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+.pill{background:var(--panel);border:1px solid var(--border);padding:6px 14px;border-radius:100px;font-size:12px;cursor:pointer;transition:0.2s;color:var(--muted2);}
+.pill:hover{border-color:var(--accent);color:var(--accent);}
+.btn-main{width:100%;padding:18px;border-radius:16px;border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:black;font-weight:800;font-size:16px;cursor:pointer;font-family:'Syne',sans-serif;transition:0.4s;display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;}
+.btn-main:hover:not(:disabled){transform:scale(1.02);box-shadow:0 12px 30px rgba(167,139,250,0.25);}
+.btn-main:disabled{opacity:0.4;cursor:not-allowed;filter:grayscale(1);}
+
+#results{display:none;}
+.section{margin-bottom:16px;background:var(--panel);border:1px solid var(--border);border-radius:20px;overflow:hidden;}
+.sh{padding:20px 24px;cursor:pointer;display:flex;align-items:center;gap:15px;transition:0.3s;user-select:none;}
+.sh:hover{background:rgba(255,255,255,0.02);}
+.si{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.si.v{background:rgba(52,211,153,0.1);color:var(--safe);}
+.si.w{background:rgba(251,191,36,0.1);color:var(--warn);}
+.si.d{background:rgba(248,113,113,0.1);color:var(--danger);}
+.st{flex:1;font-weight:700;font-size:16px;font-family:'Syne',sans-serif;}
+.chev{transition:0.4s;font-size:10px;color:var(--muted);}
+.sb{padding:0 24px;max-height:0;overflow:hidden;transition:max-height 0.5s cubic-bezier(0,1,0,1);background:rgba(0,0,0,0.1);}
+.sb.open{max-height:2000px;padding:0 24px 24px 75px;transition:max-height 0.8s ease-in-out;}
+.sumtext{font-size:15px;color:var(--text);line-height:1.7;}
+.sumtext p{margin-bottom:12px;}
+.nbtn{margin-top:30px;background:none;border:1px solid var(--border);color:var(--muted2);padding:14px;border-radius:12px;cursor:pointer;width:100%;transition:0.3s;font-weight:600;}
+.nbtn:hover{background:var(--surface);color:white;}
+
+.spkbtn{display:inline-flex;align-items:center;gap:8px;background:rgba(56,189,248,0.1);border:1px solid var(--accent);color:var(--accent);padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:0.2s;}
+.spkbtn:hover{background:var(--accent);color:black;}
+.spkbtn.active{background:var(--accent3);border-color:var(--accent3);color:white;animation:pulse 1s infinite alternate;}
+
+@keyframes pulse{from{opacity:1;}to{opacity:0.6;}}
+.loading-box{padding:40px;text-align:center;color:var(--muted2);}
+.loader{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent2);border-radius:50%;margin:0 auto 20px;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+footer {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted2);
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  border-top: 1px solid var(--border);
+  margin-top: 60px;
+}
+.credits {
+  color: var(--accent);
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<div class="glitch-bg"></div>
+
+<nav class="nav">
+  <div class="logo"><i>M</i> MedBotX</div>
+</nav>
+
+<div class="main-wrapper">
+  <header class="hero">
+    <h1><span>Interaction Intelligence</span>Molecular Defense</h1>
+    <p>Advanced clinical analysis for drug-to-drug interactions, contraindications, and patient risk assessment powered by low-latency Llama-3 neurons.</p>
+  </header>
+
+  <!-- API KEY SECTION (CLEANED) -->
+  <div id="apiSetup">
+    <div class="setup-title">🔑 Connect Your Free Groq API Key</div>
+    <div class="key-row">
+      <input type="password" class="key-input" id="groqKey" placeholder="gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+      <button class="key-save" onclick="saveKey()">Save Key ✓</button>
+    </div>
+    <div class="key-status" id="keyStatus"></div>
+  </div>
+
+  <div class="app-grid">
+    <section class="card">
+      <div class="f-group">
+        <label class="f-label">Current Medication Regimen</label>
+        <textarea id="medList" placeholder="Enter drug names, dosage, or scanned list..."></textarea>
+        <div class="pills">
+          <div class="pill" onclick="addText('Aspirin, Warfarin, Metformin')">Blood Thinners</div>
+          <div class="pill" onclick="addText('Lisinopril, Atorvastatin, Albuterol')">CV Health</div>
+          <div class="pill" onclick="addText('Sertraline, Xanax, Ibuprofen')">Pain & Mood</div>
+        </div>
+      </div>
+      
+      <div class="f-group">
+        <label class="f-label">Patient History / Conditions (Optional)</label>
+        <textarea id="history" placeholder="Diabetes Type II, Chronic Kidney Disease, Pregnant, 65+ years old..." style="min-height:100px"></textarea>
+      </div>
+
+      <button class="btn-main" id="analyzeBtn" onclick="analyze()">
+        <span id="btnIcon">⚡</span> <span id="btnText">Execute Analysis</span>
+      </button>
+    </section>
+
+    <section id="results-container">
+      <div id="loading" class="loading-box" style="display:none">
+        <div class="loader"></div>
+        <p>Crunching pharmacology data via Groq...</p>
+      </div>
+      
+      <div id="results">
+        <!-- AI Output Injected Here -->
+      </div>
+
+      <div id="intro-msg" style="padding:40px; text-align:center; color:var(--muted); border:1px dashed var(--border); border-radius:24px;">
+        <p>Awaiting input parameters for pharmacological simulation.</p>
+      </div>
+    </section>
+  </div>
+</div>
+
+<footer>
+  <p>MedBotX Intelligence System &copy; 2024</p>
+  <p style="margin-top: 8px;">Made by <span class="credits">Sabareesh.S</span> and <span class="credits">dany</span></p>
+</footer>
+
+<script>
+let speaking = false;
+const synth = window.speechSynthesis;
+
+window.onload = () => {
+  const saved = localStorage.getItem('groq_key');
+  if(saved) {
+    document.getElementById('groqKey').value = saved;
+    document.getElementById('keyStatus').innerText = "Key active and encrypted in local storage.";
+  }
+};
+
+function saveKey() {
+  const k = document.getElementById('groqKey').value.trim();
+  if(!k) return;
+  localStorage.setItem('groq_key', k);
+  document.getElementById('keyStatus').innerText = "Key successfully saved ✓";
+  document.getElementById('keyStatus').style.color = "var(--safe)";
+}
+
+function addText(t) {
+  document.getElementById('medList').value = t;
+}
+
+async function analyze() {
+  const key = document.getElementById('groqKey').value.trim();
+  const meds = document.getElementById('medList').value.trim();
+  const hist = document.getElementById('history').value.trim();
+
+  if(!key) return alert("Please enter your Groq API Key first.");
+  if(!meds) return alert("Enter at least one medication.");
+
+  toggleUI(true);
+
+  const prompt = `
+    Analyze these medications: ${meds}. 
+    Patient History: ${hist || 'None provided'}.
+    
+    Return ONLY a JSON object with this exact structure:
+    {
+      "severity": "Safe" | "Warning" | "Danger",
+      "summary": "Short 1-sentence headline of the main risk",
+      "interactions": ["Interaction 1", "Interaction 2"],
+      "contraindications": ["Issue 1"],
+      "doctorSummary": "Detailed medical explanation for doctors",
+      "patientSummary": "Simple explanation for the patient",
+      "speakablePatientSummary": "A concise summary intended for text-to-speech"
+    }
+  `;
+
+  try {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${key}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [{role: "system", content: "You are a clinical pharmacologist. Return only valid JSON."}, {role: "user", content: prompt}],
+        response_format: { type: "json_object" }
+      })
+    });
+
+    const data = await res.json();
+    const result = JSON.parse(data.choices[0].message.content);
+    renderResults(result);
+  } catch (e) {
+    console.error(e);
+    alert("Analysis failed. Check your API key or network.");
+  } finally {
+    toggleUI(false);
+  }
+}
+
+function toggleUI(loading) {
+  document.getElementById('loading').style.display = loading ? 'block' : 'none';
+  document.getElementById('intro-msg').style.display = 'none';
+  document.getElementById('results').style.display = loading ? 'none' : 'block';
+  document.getElementById('analyzeBtn').disabled = loading;
+  document.getElementById('btnText').innerText = loading ? 'Analyzing...' : 'Execute Analysis';
+  if(loading && synth) synth.cancel();
+}
+
+function speakText(text, btnId) {
+  if (speaking) {
+    synth.cancel();
+    speaking = false;
+    document.querySelectorAll('.spkbtn').forEach(b => b.classList.remove('active'));
+    return;
+  }
+
+  const ut = new SpeechSynthesisUtterance(text);
+  const btn = document.getElementById(btnId);
+  
+  ut.onstart = () => {
+    speaking = true;
+    btn.classList.add('active');
+  };
+  ut.onend = () => {
+    speaking = false;
+    btn.classList.remove('active');
+  };
+  synth.speak(ut);
+}
+
+function renderResults(data) {
+  const el = document.getElementById('results');
+  const voice = window.speechSynthesis;
+  
+  let sevClass = 'v', icon = '✓';
+  if(data.severity === 'Warning') { sevClass = 'w'; icon = '⚠'; }
+  if(data.severity === 'Danger') { sevClass = 'd'; icon = '✖'; }
+
+  let html = `
+    <div class="section">
+      <div class="sh" style="cursor:default">
+        <div class="si ${sevClass}">${icon}</div>
+        <span class="st" style="font-size:20px">${data.severity} Level Identified</span>
+      </div>
+      <div class="sb open sumtext" style="padding-top:0">
+        <p style="font-weight:600; color:white">${data.summary}</p>
+        ${voice?`<button class="spkbtn" id="mainSpk" onclick="speakText('${data.speakablePatientSummary}','mainSpk')">🔊 Read Analysis</button>`:''}
+      </div>
+    </div>
+  `;
+
+  if (data.interactions?.length) {
+    html += `<div class="section"><div class="sh" onclick="toggleSec(this)"><div class="si w">⚡</div><span class="st">Interactions Found (${data.interactions.length})</span><span class="chev">▼</span></div><div class="sb open"><ul>${data.interactions.map(i=>`<li>${i}</li>`).join('')}</ul></div></div>`;
+  }
+
+  if (data.doctorSummary) {
+    html+=`<div class="section"><div class="sh" onclick="toggleSec(this)"><div class="si v">🩺</div><span class="st">Clinical Provider Brief</span><span class="chev">▼</span></div><div class="sb sumtext"><p>${data.doctorSummary.replace(/\n/g,'</p><p>')}</p></div></div>`;
+  }
+
+  if (data.patientSummary) {
+    const spk=JSON.stringify(data.speakablePatientSummary||data.patientSummary);
+    html+=`<div class="section"><div class="sh" onclick="toggleSec(this)"><div class="si v">💬</div><span class="st">Patient-Friendly Summary</span><span class="chev">▼</span></div><div class="sb open sumtext"><p>${data.patientSummary.replace(/\n/g,'</p><p>')}</p>${voice?`<button class="spkbtn" id="patSpk" onclick="speakText(${spk},'patSpk')" style="margin-top:16px">🔊 Read Aloud</button>`:''}</div></div>`;
+  }
+
+  html+=`<button class="nbtn" onclick="resetForm()">↩ New Analysis</button>`;
+  el.innerHTML=html;
+
+  if (voice && data.speakablePatientSummary) setTimeout(()=>speakText(data.speakablePatientSummary,'mainSpk'),900);
+  el.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function toggleSec(h) {
+  const b=h.nextElementSibling, c=h.querySelector('.chev');
+  const open=b.classList.toggle('open');
+  c.style.transform=open?'rotate(180deg)':'';
+}
+
+function resetForm() {
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  speaking=false;
+  document.getElementById('results').style.display='none';
+  document.getElementById('intro-msg').style.display='block';
+  document.getElementById('medList').value='';
+  document.getElementById('history').value='';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+</script>
+</body>
+</html>
